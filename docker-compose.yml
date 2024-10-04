@@ -1,0 +1,57 @@
+version: '3.8'
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: hair_salon
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+        networks:
+            - laravel
+
+    webserver:
+        image: nginx:alpine
+        container_name: nginx
+        ports:
+            - "8000:80"
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - laravel
+        depends_on:
+            - app
+
+    db:
+        image: mysql:8.0
+        container_name: mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: hair_salon
+            MYSQL_USER: hair_us
+            MYSQL_PASSWORD: hair_pw
+        volumes:
+            - dbdata:/var/lib/mysql
+        networks:
+            - laravel
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        environment:
+            PMA_HOST: db  # tên của service database trong docker-compose.yml
+            PMA_USER: hair_us
+            PMA_PASSWORD: hair_pw
+        ports:
+            - "8080:80"  # truy cập phpMyAdmin tại http://localhost:8080
+        networks:
+            - laravel
+
+networks:
+    laravel:
+        driver: bridge
+
+volumes:
+    dbdata:
+        driver: local
